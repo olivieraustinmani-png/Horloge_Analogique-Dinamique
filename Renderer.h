@@ -7,11 +7,9 @@ public:
     Renderer(SDL_Renderer* renderer);
 
     void DrawAnalogFrame(int cx, int cy, int radius);
-    void DrawDigitalFrame(int x, int y, int w, int h);
+    void DrawHands(int cx, int cy, int radius, int hours, int minutes, int seconds);
+    void DrawDigitalFrame(int x, int y, int w, int h, int hours, int minutes, int seconds);
 
 private:
     SDL_Renderer* renderer;
 };
-
-void DrawDigitalFrame(int x, int y, int w, int h);
-

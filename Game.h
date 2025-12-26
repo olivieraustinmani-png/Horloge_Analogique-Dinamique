@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 #include "Renderer.h"
+#include "TimeManager.h"
 
 
 #include <SDL3/SDL.h>
@@ -24,6 +25,9 @@ private:
     SDL_Renderer* renderer = nullptr;
     Renderer* clockRenderer = nullptr;
     bool running = false;
+
+private:
+    TimeManager timeManager;    
 };
 
 #endif

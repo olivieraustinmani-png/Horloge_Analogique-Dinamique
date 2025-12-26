@@ -62,7 +62,8 @@ void Game::HandleEvents()
 
 void Game::Update()
 {
-    // Rien pour l’instant
+    timeManager.Update();
+    // Plus tard : on passera les valeurs à Renderer pour l'affichage
 }
 
 void Game::Render()
@@ -72,7 +73,14 @@ void Game::Render()
 
     if ( clockRenderer) {
         clockRenderer->DrawAnalogFrame(300, 300, 200);
-        clockRenderer->DrawDigitalFrame(180, 540, 240, 60);
+        clockRenderer->DrawDigitalFrame(180, 540, 240, 60,
+                                        timeManager.GetHours(),
+                                        timeManager.GetMinutes(),
+                                        timeManager.GetSeconds());
+        clockRenderer->DrawHands(300, 300, 180,
+                                timeManager.GetHours(),
+                                timeManager.GetMinutes(),
+                                timeManager.GetSeconds());
     }
 
     SDL_RenderPresent(renderer);
