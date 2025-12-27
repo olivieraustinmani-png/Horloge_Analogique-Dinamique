@@ -29,7 +29,25 @@ void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
     for (int i = 0; i < 60; i++)
     {
         float angle = i * 6.0f * M_PI / 180.0f;
-        int inner = (i % 5 == 0) ? radius - 15 : radius - 8;
+
+        int inner;
+
+        if (i % 5 == 0) {
+            inner = radius - 20; // heures
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // heures
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                for (int dy = -2; dy <= 2; dy++)
+                {
+                    SDL_RenderPoint(renderer, cx + dx, cy + dy);
+                }
+            }
+        } else {
+            inner = radius - 6;  // minutes
+            SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255); // minutes
+        }
+
+
 
         int x1 = cx + cos(angle - M_PI / 2) * inner;
         int y1 = cy + sin(angle - M_PI / 2) * inner;
@@ -55,7 +73,7 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
                        cy + sin(secAngle) * radius * 0.9f);
 
     // Minute (blanc)
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255); // modification de la couleur de l'aiguille de minute...
     SDL_RenderLine(renderer,
                        cx, cy,
                        cx + cos(minAngle) * radius * 0.8f,
