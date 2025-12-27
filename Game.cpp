@@ -2,6 +2,7 @@
 #include <iostream>
 #include "Renderer.h"
 #include "UI.h"
+#include "TimeManager.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_sdl3.h"
@@ -17,7 +18,7 @@ Game::~Game() {
 
 bool Game::Init()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "Erreur SDL_Init: " << SDL_GetError() << std::endl;
         return false;
     }
@@ -34,6 +35,8 @@ bool Game::Init()
     }
 
     renderer = SDL_CreateRenderer(window, nullptr);
+    if (!renderer) return false;
+    
     // --- ImGui init ---
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -43,7 +46,7 @@ bool Game::Init()
         ImGui_ImplSDLRenderer3_Init(renderer);
 
         // UI
-        ui = new UI();
+        ui = new UI(window, renderer);
 
     if (!renderer) {
         std::cerr << "Erreur CreateRenderer: " << SDL_GetError() << std::endl;
@@ -57,15 +60,42 @@ bool Game::Init()
 
 void Game::Run()
 {
-    if (!Init()) return;
-
-    while (running) {
-        HandleEvents();
-        Update();
-        Render();
-        SDL_Delay(16); // ~60 FPS
+    if (!Init()) {
+        std::cerr << "Erreur d'initialisation SDL3." << std::endl;
+        return;
     }
+
+    // Création de l'UI après renderer
+    ui = new UI(window, renderer);
+
+    // Boucle principale
+    while (running)
+    {
+        // Gestion des événements
+        HandleEvents();
+
+        // Mise à jour des données (heure, etc.)
+        timeManager.Update();
+
+        // Démarrage de la frame ImGui
+        ui->BeginFrame();
+        ui->Render();
+        
+        // Rendu principal de l'horloge
+        Render();
+
+        // Fin de frame ImGui
+        ui->EndFrame();
+
+        // Petite pause pour limiter à ~60 FPS
+        SDL_Delay(16);
+    }
+
+    // Nettoyage
+    if (ui) { delete ui; ui = nullptr; }
+    CleanUp();
 }
+
 
 void Game::HandleEvents()
 {
@@ -123,7 +153,7 @@ void Game::CleanUp()
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
-if (ui) delete ui;
+    if (ui) delete ui;
 
     SDL_Quit();
 }
