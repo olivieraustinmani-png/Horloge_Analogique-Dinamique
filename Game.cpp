@@ -4,9 +4,9 @@
 #include "UI.h"
 #include "TimeManager.h"
 
-#include "imgui.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
+/*#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"*/
 
 
 
@@ -38,15 +38,15 @@ bool Game::Init()
     if (!renderer) return false;
     
     // --- ImGui init ---
-        IMGUI_CHECKVERSION();
+     /*   IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
         ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-        ImGui_ImplSDLRenderer3_Init(renderer);
+        ImGui_ImplSDLRenderer3_Init(renderer);*/
 
         // UI
-        ui = new UI(window, renderer);
+        //ui = new UI(window, renderer);
 
     if (!renderer) {
         std::cerr << "Erreur CreateRenderer: " << SDL_GetError() << std::endl;
@@ -66,7 +66,7 @@ void Game::Run()
     }
 
     // Création de l'UI après renderer
-    ui = new UI(window, renderer);
+    //ui = new UI(window, renderer);
 
     // Boucle principale
     while (running)
@@ -78,22 +78,22 @@ void Game::Run()
         timeManager.Update();
 
         // Démarrage de la frame ImGui
-        ui->BeginFrame();
-        ui->Render();
+        /*ui->BeginFrame();
+        ui->Render();*/
         
         // Rendu principal de l'horloge
         Render();
 
         // Fin de frame ImGui
-        ui->EndFrame();
+        /*ui->EndFrame();*/
 
         // Petite pause pour limiter à ~60 FPS
         SDL_Delay(16);
     }
 
     // Nettoyage
-    if (ui) { delete ui; ui = nullptr; }
-    CleanUp();
+    /*if (ui) { delete ui; ui = nullptr; }
+    CleanUp();*/
 }
 
 
@@ -118,9 +118,9 @@ void Game::Render()
     SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
     SDL_RenderClear(renderer);
     // --- ImGui new frame ---
-        ImGui_ImplSDLRenderer3_NewFrame();
+        /*ImGui_ImplSDLRenderer3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
+        ImGui::NewFrame();*/
 
 
     if ( clockRenderer) {
@@ -136,8 +136,16 @@ void Game::Render()
     }
 
     // --- ImGui render ---
-        ImGui::Render();
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+        /*ImGui::Render();
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);*/
+
+        clockRenderer->DrawTimeDigital(
+        200, 550,
+        20,
+        timeManager.GetHours(),
+        timeManager.GetMinutes(),
+        timeManager.GetSeconds()
+    );
 
 
     SDL_RenderPresent(renderer);
@@ -149,11 +157,11 @@ void Game::CleanUp()
     if (renderer) SDL_DestroyRenderer(renderer);
     if (window) SDL_DestroyWindow(window);
 
-    ImGui_ImplSDLRenderer3_Shutdown();
+    /*ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
+    ImGui::DestroyContext();*/
 
-    if (ui) delete ui;
+    /*if (ui) delete ui;*/
 
     SDL_Quit();
 }

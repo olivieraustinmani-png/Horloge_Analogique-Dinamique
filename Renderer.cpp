@@ -90,6 +90,7 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
 // Dessin du cadre digital
 void Renderer::DrawDigitalFrame(int x, int y, int w, int h, int hours, int minutes, int seconds)
 {
+
     SDL_FRect rect = { (float)x, (float)y, (float)w, (float)h };
 
     // Fond
@@ -102,3 +103,54 @@ void Renderer::DrawDigitalFrame(int x, int y, int w, int h, int hours, int minut
 
     // Pour l'instant, on n’affiche pas le texte (sera ajouté plus tard avec SDL_ttf)
 }
+
+void Renderer::DrawDigit(int x, int y, int size, int digit)
+{
+    const bool segments[10][7] = {
+        {1,1,1,1,1,1,0}, // 0
+        {0,1,1,0,0,0,0}, // 1
+        {1,1,0,1,1,0,1}, // 2
+        {1,1,1,1,0,0,1}, // 3
+        {0,1,1,0,0,1,1}, // 4
+        {1,0,1,1,0,1,1}, // 5
+        {1,0,1,1,1,1,1}, // 6
+        {1,1,1,0,0,0,0}, // 7
+        {1,1,1,1,1,1,1}, // 8
+        {1,1,1,1,0,1,1}  // 9
+    };
+
+    SDL_SetRenderDrawColor(renderer, 0, 220, 0, 255);
+
+    int w = size;
+    int h = size / 4;
+
+    float fx = static_cast<float>(x);
+    float fy = static_cast<float>(y);
+    float fw = static_cast<float>(w);
+    float fh = static_cast<float>(h);
+
+    SDL_FRect segmentRects[7] = {
+        {fx + fh, fy, fw, fh},          // A
+        {fx + fw + fh, fy + fh, fh, fw},      // B
+        {fx + fw + fh, fy + fw + 2*fh, fh, fw}, // C
+        {fx + fh, fy + 2*fw + 2*fh, fw, fh},  // D
+        {fx, fy + fw + 2*fh, fh, fw},         // E
+    };
+
+    for (int i = 0; i < 7; i++)
+        if (segments[digit][i])
+            SDL_RenderFillRect(renderer, &segmentRects[i]);
+}
+
+void Renderer::DrawTimeDigital(int x, int y, int size, int h, int m, int s)
+{
+    DrawDigit(x, y, size, h / 10);
+    DrawDigit(x + size * 2, y, size, h % 10);
+
+    DrawDigit(x + size * 4, y, size, m / 10);
+    DrawDigit(x + size * 6, y, size, m % 10);
+
+    DrawDigit(x + size * 8, y, size, s / 10);
+    DrawDigit(x + size * 10, y, size, s % 10);
+}
+

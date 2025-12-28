@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 #include <SDL3/SDL.h>
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
@@ -21,4 +21,4 @@ public:
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
-};
+};*/

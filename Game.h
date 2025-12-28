@@ -6,9 +6,9 @@
 
 #include <SDL3/SDL.h>
 #include "UI.h"
-#include "imgui.h"
-#include "backends/imgui_impl_sdl3.h"
-#include "backends/imgui_impl_sdlrenderer3.h"
+/*#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"*/
 
 class Game {
 public:
@@ -28,7 +28,7 @@ private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     Renderer* clockRenderer = nullptr;
-    UI* ui = nullptr;
+    //UI* ui = nullptr;
     bool running = false;
 
 private:

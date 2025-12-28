@@ -1,10 +1,14 @@
-#include "UI.h"
+/*#include "UI.h"
+#include <SDL3/SDL.h>
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 UI::UI(SDL_Window* win, SDL_Renderer* rend)
     : window(win), renderer(rend)
 {
     // Initialisation ImGui
-    IMGUI_CHECKVERSION();
+    /*IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
 
@@ -14,14 +18,14 @@ UI::UI(SDL_Window* win, SDL_Renderer* rend)
 
 UI::~UI()
 {
-    ImGui_ImplSDLRenderer3_Shutdown();
+    /*ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 }
 
 void UI::BeginFrame()
 {
-    ImGui_ImplSDLRenderer3_NewFrame();
+    /*ImGui_ImplSDLRenderer3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 }
@@ -29,7 +33,7 @@ void UI::BeginFrame()
 void UI::Render()
 {
     // Exemple simple : fenêtre flottante
-    ImGui::Begin("Horloge Options");
+    /*ImGui::Begin("Horloge Options");
 
     ImGui::Checkbox("Activer Alarme", &showAlarm);
     ImGui::Checkbox("Format 24h", &is24hFormat);
@@ -40,6 +44,6 @@ void UI::Render()
 
 void UI::EndFrame()
 {
-    ImGui::Render();
+    /*ImGui::Render();
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-}
+}*/
