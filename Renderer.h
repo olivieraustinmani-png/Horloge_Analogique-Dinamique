@@ -5,18 +5,19 @@ class Renderer
 {
 public:
     Renderer(SDL_Renderer* renderer);
-
-    void DrawAnalogFrame(int cx, int cy, int radius);
-
-    void DrawHands(int cx, int cy, int radius, int hours, int minutes, int seconds);
-
-    void DrawDigitalFrame(int x, int y, int w, int h, int hours, int minutes, int seconds);
-
-    void DrawDigit(int x, int y, int size, int digit);
     
-    void DrawTimeDigital(int x, int y, int size, int h, int m, int s);
-
+    // Analogique
+    void DrawAnalogFrame(int cx, int cy, int radius);
+    void DrawHands(int cx, int cy, int radius, int hours, int minutes, int seconds);
+    
+    // Digitale
+    void DrawDigitalDisplay(int x, int y, int w, int h, int hours, int minutes, int seconds);
 
 private:
     SDL_Renderer* renderer;
+    
+    // TES fonctions de chiffres
+    void DrawDigit(int x, int y, int size, int digit);
+    void DrawColon(int x, int y, int size);
+    void DrawDigitalTime(int x, int y, int size, int h, int m, int s);
 };

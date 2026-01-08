@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include <cmath>
+#include <string>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -7,7 +8,7 @@
 
 Renderer::Renderer(SDL_Renderer* r) : renderer(r) {}
 
-// Dessin du cadran analogique
+// === ANALOGIQUE (ton code exact) ===
 void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
 {
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
@@ -47,8 +48,6 @@ void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
             SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255); // minutes
         }
 
-
-
         int x1 = cx + cos(angle - M_PI / 2) * inner;
         int y1 = cy + sin(angle - M_PI / 2) * inner;
         int x2 = cx + cos(angle - M_PI / 2) * radius;
@@ -58,7 +57,6 @@ void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
     }
 }
 
-// Dessin des aiguilles
 void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int seconds)
 {
     float secAngle = (seconds * 6.0f - 90.0f) * M_PI / 180.0f;
@@ -73,7 +71,7 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
                        cy + sin(secAngle) * radius * 0.9f);
 
     // Minute (blanc)
-    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255); // modification de la couleur de l'aiguille de minute...
+    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
     SDL_RenderLine(renderer,
                        cx, cy,
                        cx + cos(minAngle) * radius * 0.8f,
@@ -87,23 +85,30 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
                        cy + sin(hourAngle) * radius * 0.6f);
 }
 
-// Dessin du cadre digital
-void Renderer::DrawDigitalFrame(int x, int y, int w, int h, int hours, int minutes, int seconds)
+// === DIGITALE AVEC TES CHIFFRES et CADRE RÉDUIT ===
+void Renderer::DrawDigitalDisplay(int x, int y, int w, int h, int hours, int minutes, int seconds)
 {
-
-    SDL_FRect rect = { (float)x, (float)y, (float)w, (float)h };
-
-    // Fond
+    // Fond du cadre digital - PLUS PETIT
     SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-    SDL_RenderFillRect(renderer, &rect);
-
-    // Bordure
-    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
-    SDL_RenderRect(renderer, &rect);
-
-    // Pour l'instant, on n’affiche pas le texte (sera ajouté plus tard avec SDL_ttf)
+    SDL_FRect background = {static_cast<float>(x), 
+                           static_cast<float>(y), 
+                           static_cast<float>(w), 
+                           static_cast<float>(h)};
+    SDL_RenderFillRect(renderer, &background);
+    
+    // Bordure simple
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    SDL_RenderRect(renderer, &background);
+    
+    // Afficher l'heure avec TES chiffres
+    int digitSize = 20; // Taille réduite pour cadre plus petit
+    int startX = x + 10;
+    int startY = y + (h - digitSize * 2) / 2;
+    
+    DrawDigitalTime(startX, startY, digitSize, hours, minutes, seconds);
 }
 
+// === TES FONCTIONS DE CHIFFRES (exactement comme tu les avais) ===
 void Renderer::DrawDigit(int x, int y, int size, int digit)
 {
     const bool segments[10][7] = {
@@ -119,38 +124,128 @@ void Renderer::DrawDigit(int x, int y, int size, int digit)
         {1,1,1,1,0,1,1}  // 9
     };
 
-    SDL_SetRenderDrawColor(renderer, 0, 220, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 220, 0, 255); // Vert digital
 
-    int w = size;
-    int h = size / 4;
-
-    float fx = static_cast<float>(x);
-    float fy = static_cast<float>(y);
-    float fw = static_cast<float>(w);
-    float fh = static_cast<float>(h);
-
-    SDL_FRect segmentRects[7] = {
-        {fx + fh, fy, fw, fh},          // A
-        {fx + fw + fh, fy + fh, fh, fw},      // B
-        {fx + fw + fh, fy + fw + 2*fh, fh, fw}, // C
-        {fx + fh, fy + 2*fw + 2*fh, fw, fh},  // D
-        {fx, fy + fw + 2*fh, fh, fw},         // E
-    };
-
-    for (int i = 0; i < 7; i++)
-        if (segments[digit][i])
-            SDL_RenderFillRect(renderer, &segmentRects[i]);
+    int segmentWidth = size / 5;
+    int segmentLength = size * 3 / 2;
+    
+    const bool* seg = segments[digit];
+    
+    // Segment A (haut)
+    if (seg[0]) {
+        SDL_FRect rect = {static_cast<float>(x), 
+                         static_cast<float>(y), 
+                         static_cast<float>(segmentLength), 
+                         static_cast<float>(segmentWidth)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment B (haut droit)
+    if (seg[1]) {
+        SDL_FRect rect = {static_cast<float>(x + segmentLength - segmentWidth), 
+                         static_cast<float>(y), 
+                         static_cast<float>(segmentWidth), 
+                         static_cast<float>(size)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment C (bas droit)
+    if (seg[2]) {
+        SDL_FRect rect = {static_cast<float>(x + segmentLength - segmentWidth), 
+                         static_cast<float>(y + size), 
+                         static_cast<float>(segmentWidth), 
+                         static_cast<float>(size)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment D (bas)
+    if (seg[3]) {
+        SDL_FRect rect = {static_cast<float>(x), 
+                         static_cast<float>(y + 2*size), 
+                         static_cast<float>(segmentLength), 
+                         static_cast<float>(segmentWidth)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment E (bas gauche)
+    if (seg[4]) {
+        SDL_FRect rect = {static_cast<float>(x), 
+                         static_cast<float>(y + size), 
+                         static_cast<float>(segmentWidth), 
+                         static_cast<float>(size)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment F (haut gauche)
+    if (seg[5]) {
+        SDL_FRect rect = {static_cast<float>(x), 
+                         static_cast<float>(y), 
+                         static_cast<float>(segmentWidth), 
+                         static_cast<float>(size)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    
+    // Segment G (milieu)
+    if (seg[6]) {
+        SDL_FRect rect = {static_cast<float>(x), 
+                         static_cast<float>(y + size), 
+                         static_cast<float>(segmentLength), 
+                         static_cast<float>(segmentWidth)};
+        SDL_RenderFillRect(renderer, &rect);
+    }
 }
 
-void Renderer::DrawTimeDigital(int x, int y, int size, int h, int m, int s)
+void Renderer::DrawColon(int x, int y, int size)
 {
-    DrawDigit(x, y, size, h / 10);
-    DrawDigit(x + size * 2, y, size, h % 10);
-
-    DrawDigit(x + size * 4, y, size, m / 10);
-    DrawDigit(x + size * 6, y, size, m % 10);
-
-    DrawDigit(x + size * 8, y, size, s / 10);
-    DrawDigit(x + size * 10, y, size, s % 10);
+    SDL_SetRenderDrawColor(renderer, 0, 220, 0, 255); // Même vert
+    
+    int dotSize = size / 4;
+    int spacing = size / 2;
+    
+    // Point supérieur
+    SDL_FRect topDot = {static_cast<float>(x), 
+                       static_cast<float>(y), 
+                       static_cast<float>(dotSize), 
+                       static_cast<float>(dotSize)};
+    
+    // Point inférieur
+    SDL_FRect bottomDot = {static_cast<float>(x), 
+                          static_cast<float>(y + spacing), 
+                          static_cast<float>(dotSize), 
+                          static_cast<float>(dotSize)};
+    
+    SDL_RenderFillRect(renderer, &topDot);
+    SDL_RenderFillRect(renderer, &bottomDot);
 }
 
+void Renderer::DrawDigitalTime(int x, int y, int size, int h, int m, int s)
+{
+    // Extraire chaque chiffre
+    int h1 = h / 10;
+    int h2 = h % 10;
+    int m1 = m / 10;
+    int m2 = m % 10;
+    int s1 = s / 10;
+    int s2 = s % 10;
+    
+    // Espacement entre les chiffres
+    int spacing = size + 20;
+    
+    // Heures
+    DrawDigit(x, y, size, h1);
+    DrawDigit(x + spacing, y, size, h2);
+    
+    // Deux-points
+    DrawColon(x + 2*spacing, y + size/2, size/2);
+    
+    // Minutes
+    DrawDigit(x + 2*spacing + 15, y, size, m1);
+    DrawDigit(x + 3*spacing + 15, y, size, m2);
+    
+    // Deux-points
+    DrawColon(x + 4*spacing + 20, y + size/2, size/2);
+    
+    // Secondes
+    DrawDigit(x + 4*spacing + 30, y, size, s1);
+    DrawDigit(x + 5*spacing + 30, y, size, s2);
+}

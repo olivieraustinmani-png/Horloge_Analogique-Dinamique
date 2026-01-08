@@ -115,39 +115,35 @@ void Game::Update()
 
 void Game::Render()
 {
-    SDL_SetRenderDrawColor(renderer, 20, 20, 20, 255);
+    // Fond sombre
+    SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
     SDL_RenderClear(renderer);
-    // --- ImGui new frame ---
-        /*ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();*/
-
-
-    if ( clockRenderer) {
-        clockRenderer->DrawAnalogFrame(300, 300, 200);
-        clockRenderer->DrawDigitalFrame(180, 540, 240, 60,
-                                        timeManager.GetHours(),
-                                        timeManager.GetMinutes(),
-                                        timeManager.GetSeconds());
-        clockRenderer->DrawHands(300, 300, 180,
+    
+    if (clockRenderer) {
+        // Horloge analogique (centrée)
+        int centerX = 400;
+        int centerY = 250;
+        int radius = 150;
+        
+        clockRenderer->DrawAnalogFrame(centerX, centerY, radius);
+        clockRenderer->DrawHands(centerX, centerY, radius - 20,
                                 timeManager.GetHours(),
                                 timeManager.GetMinutes(),
                                 timeManager.GetSeconds());
+        
+        // Horloge digitale réduite (petit cadre en bas)
+        int digitalX = 250;          // Début du cadre
+        int digitalY = 450;          // Position Y
+        int digitalWidth = 300;      // Largeur réduite
+        int digitalHeight = 60;      // Hauteur réduite
+        
+        clockRenderer->DrawDigitalDisplay(digitalX, digitalY, 
+                                         digitalWidth, digitalHeight,
+                                         timeManager.GetHours(),
+                                         timeManager.GetMinutes(),
+                                         timeManager.GetSeconds());
     }
-
-    // --- ImGui render ---
-        /*ImGui::Render();
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);*/
-
-        clockRenderer->DrawTimeDigital(
-        200, 550,
-        20,
-        timeManager.GetHours(),
-        timeManager.GetMinutes(),
-        timeManager.GetSeconds()
-    );
-
-
+    
     SDL_RenderPresent(renderer);
 }
 
