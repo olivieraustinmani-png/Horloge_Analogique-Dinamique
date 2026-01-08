@@ -197,10 +197,11 @@ void Renderer::DrawDigit(int x, int y, int size, int digit)
 
 void Renderer::DrawColon(int x, int y, int size)
 {
-    SDL_SetRenderDrawColor(renderer, 0, 220, 0, 255); // Même vert
+    // CHANGER ICI : Rouge au lieu de vert
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);  // ← ROUGE
     
-    int dotSize = size / 4;
-    int spacing = size / 2;
+    int dotSize = size / 2;
+    int spacing = size / 1;
     
     // Point supérieur
     SDL_FRect topDot = {static_cast<float>(x), 
@@ -229,7 +230,7 @@ void Renderer::DrawDigitalTime(int x, int y, int size, int h, int m, int s)
     int s2 = s % 10;
     
     // Espacement entre les chiffres
-    int spacing = size + 20;
+    int spacing = size + 18;
     
     // Heures
     DrawDigit(x, y, size, h1);
