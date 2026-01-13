@@ -30,4 +30,6 @@ private:
                             float& analogScale, float& digitalScale,
                             bool& showDemo);
     void RenderThemePreview(int currentTheme);
+    void ApplyCustomStyle();
+    void UpdateTheme(int themeID);
 };
