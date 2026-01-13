@@ -1,20 +1,15 @@
 #ifndef GAME_H
 #define GAME_H
-#include "Renderer.h"
-#include "TimeManager.h"
-
 
 #include <SDL3/SDL.h>
+#include "Renderer.h"
+#include "TimeManager.h"
 #include "UI.h"
-/*#include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"*/
 
 class Game {
 public:
     Game();
     ~Game();
-
     void Run();
 
 private:
@@ -24,15 +19,22 @@ private:
     void Render();
     void CleanUp();
 
-private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     Renderer* clockRenderer = nullptr;
-    //UI* ui = nullptr;
+    UI* ui = nullptr; // On utilise ta classe UI dédiée
     bool running = false;
 
-private:
-    TimeManager timeManager;    
+    TimeManager timeManager;
+    
+    // Variables de contrôle pour l'interface
+    bool use24hFormat = true;
+    int currentTheme = 0;
+    bool showAnalog = true;
+    bool showDigital = true;
+    float analogScale = 1.0f;
+    float digitalScale = 1.0f;
+    bool showDemo = false;
 };
 
 #endif

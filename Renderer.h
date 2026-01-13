@@ -1,9 +1,14 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include "imgui.h"
 
 class Renderer
 {
 public:
+
+    void initImGui(SDL_Window* window, SDL_Renderer* sdlrenderer);
+    void shutdownImGui();
+
     Renderer(SDL_Renderer* renderer);
     
     // Analogique

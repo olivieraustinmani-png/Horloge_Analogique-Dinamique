@@ -2,9 +2,25 @@
 #include <cmath>
 #include <string>
 
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+void Renderer::initImGui(SDL_Window* window, SDL_Renderer* sdlRenderer) {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplSDL3_InitForSDLRenderer(window, sdlRenderer);
+    ImGui_ImplSDLRenderer3_Init(sdlRenderer);
+}
+
+void Renderer::shutdownImGui() {
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+}
 
 Renderer::Renderer(SDL_Renderer* r) : renderer(r) {}
 
