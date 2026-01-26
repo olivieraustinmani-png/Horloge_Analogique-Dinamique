@@ -27,8 +27,8 @@ Renderer::Renderer(SDL_Renderer* r) : renderer(r) {}
 // === ANALOGIQUE===
 void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
 {
+    // 1. Dessin du contour (ton ancien code)
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
-
     for (int i = 0; i < 360; i++)
     {
         float rad1 = i * M_PI / 180.0f;
@@ -42,26 +42,43 @@ void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
         SDL_RenderLine(renderer, x1, y1, x2, y2);
     }
 
-    // Graduations
+    // 2. Point central (ton ancien code)
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    for (int dx = -2; dx <= 2; dx++) {
+        for (int dy = -2; dy <= 2; dy++) {
+            SDL_RenderPoint(renderer, cx + dx, cy + dy);
+        }
+    }
+
+    // 3. Graduations ET CHIFFRES
     for (int i = 0; i < 60; i++)
     {
         float angle = i * 6.0f * M_PI / 180.0f;
-
         int inner;
 
         if (i % 5 == 0) {
-            inner = radius - 20; // heures
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // heures
-            for (int dx = -2; dx <= 2; dx++)
-            {
-                for (int dy = -2; dy <= 2; dy++)
-                {
-                    SDL_RenderPoint(renderer, cx + dx, cy + dy);
-                }
+            inner = radius - 15; // Graduation Heure
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+            // --- AJOUT DES CHIFFRES ---
+            int hourValue = (i == 0) ? 12 : i / 5;
+            int distText = radius - 40; // Positionné vers l'intérieur
+            int dSize = 6; // Taille adaptée pour tenir dans le cadran
+            
+            // Calcul de la position (décalage de M_PI/2 pour que 12 soit en haut)
+            int tx = cx + cos(angle - M_PI / 2) * distText;
+            int ty = cy + sin(angle - M_PI / 2) * distText;
+
+            // Ajustement pour centrer le dessin du chiffre
+            if (hourValue >= 10) {
+                DrawDigit(tx - 6, ty - 6, dSize, hourValue / 10);
+                DrawDigit(tx + 4, ty - 6, dSize, hourValue % 10);
+            } else {
+                DrawDigit(tx - 3, ty - 6, dSize, hourValue);
             }
         } else {
-            inner = radius - 6;  // minutes
-            SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255); // minutes
+            inner = radius - 6;  // Graduation Minute
+            SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
         }
 
         int x1 = cx + cos(angle - M_PI / 2) * inner;

@@ -13,6 +13,7 @@ public:
     
     // Analogique
     void DrawAnalogFrame(int cx, int cy, int radius);
+    void DrawDigit(int x, int y, int size, int digit);
     void DrawHands(int cx, int cy, int radius, int hours, int minutes, int seconds);
     
     // Digitale
@@ -22,7 +23,6 @@ private:
     SDL_Renderer* renderer;
     
     // TES fonctions de chiffres
-    void DrawDigit(int x, int y, int size, int digit);
     void DrawColon(int x, int y, int size);
     void DrawDigitalTime(int x, int y, int size, int h, int m, int s);
 };
