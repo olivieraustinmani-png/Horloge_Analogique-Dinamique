@@ -1,28 +1,49 @@
 #include "Game.h"
 #include <iostream>
+#include <cmath> // Pour sin()
 
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 
-Game::Game() {}
+Game::Game() : audioDevice(0), audioStream(nullptr) {}
 
 Game::~Game() {
     CleanUp();
 }
 
-bool Game::Init()
-{
+bool Game::Init() {
+    // 1. Initialiser SDL avec Vidéo et Audio
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         std::cerr << "Erreur SDL_Init: " << SDL_GetError() << std::endl;
         return false;
     }
 
+    // 2. Création de la fenêtre et du renderer
     window = SDL_CreateWindow("Horloge Analogique Digital", 800, 600, SDL_WINDOW_RESIZABLE);
     if (!window) return false;
 
     renderer = SDL_CreateRenderer(window, nullptr);
     if (!renderer) return false;
+
+    // 3. Configuration de l'Audio pour SDL3
+    // Dans Game::Init()
+    SDL_AudioSpec spec;
+    spec.format = SDL_AUDIO_F32;
+    spec.channels = 1;
+    spec.freq = 44100;
+
+    // Correction du nom de la constante pour SDL3
+    audioDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
+    
+    if (audioDevice == 0) {
+        std::cerr << "Erreur Audio Device: " << SDL_GetError() << std::endl;
+    } else {
+        audioStream = SDL_CreateAudioStream(&spec, &spec);
+        if (audioStream) {
+            SDL_BindAudioStream(audioDevice, audioStream);
+        }
+    }
 
     ui = new UI(window, renderer);
     clockRenderer = new Renderer(renderer);
@@ -30,63 +51,54 @@ bool Game::Init()
     return true;
 }
 
-void Game::Run()
-{
+void Game::Run() {
     if (!Init()) return;
 
     while (running) {
         HandleEvents();
-        
-        // --- MISE À JOUR DU TEMPS ET LOGIQUE ---
         timeManager.Update();
 
-        // LOGIQUE DE L'ALARME : On vérifie si ça doit sonner
         int h = timeManager.GetHours();
         int m = timeManager.GetMinutes();
         int s = timeManager.GetSeconds();
 
+        // --- LOGIQUE DE L'ALARME ---
         if (myAlarm.active && !myAlarm.ringing) {
-            //on vérifie l'heure et la minute
-            // Déclenchement si l'heure correspond (à la seconde 0 pour éviter les doublons)
-            // On ajoute un flag interne pour éviter que ça ne se déclenche 60 fois par seconde
-            static int lastTriggerMinute = -1;
-            bool isMainTime = (h == myAlarm.hour && m == myAlarm.minute && s == 0);
-            bool isSnoozeTime = (myAlarm.snoozeActive && h == myAlarm.snoozeHour && m == myAlarm.snoozeMinute && s == 0);
-
-            if ((isMainTime || isSnoozeTime) && lastTriggerMinute != m) {
+            if (h == myAlarm.hour && m == myAlarm.minute && s == 0) {
                 myAlarm.ringing = true;
-                myAlarm.snoozeActive = false; // Désactive le mode snooze s'il était actif
-                lastTriggerMinute = m; // On mémorise qu'on a déjà fait sonner cette minute
-                std::cout << "Tok TOK Tok ! Il est " << h << ":" << m << std::endl;
-            }
-
-            // Reset du flag quand la minute passe pour permettre à l'alarme de demain de sonner
-            if (m != myAlarm.minute && !myAlarm.snoozeActive) {
-                lastTriggerMinute = -1;
-            }
-
-            if ( myAlarm.ringing ) {
-                //bip system comme son d'alarm
-                static int lastBipSecond = -1;
-                if ( s != lastBipSecond ) {
-                    std::cout <<"\a" << std::flush; //bip sonore
-                }
+                if (audioDevice) SDL_ResumeAudioDevice(audioDevice);
             }
         }
-        // ---------------------------------------
+
+        // --- GÉNÉRATION DU SON (BIP) ---
+        if (myAlarm.ringing && audioStream) {
+            // On génère un petit tampon de son (onde sinusoïdale)
+            float buffer[512];
+            static double phase = 0;
+            for (int i = 0; i < 512; i++) {
+                buffer[i] = 0.2f * sin(phase); // Volume à 20%
+                phase += 0.15; // Fréquence du bip
+            }
+            // On envoie les données mathématiques au flux audio
+            SDL_PutAudioStreamData(audioStream, buffer, sizeof(buffer));
+        } 
+        else if (!myAlarm.ringing && audioDevice) {
+            SDL_PauseAudioDevice(audioDevice);
+            SDL_ClearAudioStream(audioStream); // On vide le flux pour arrêter le son net
+        }
 
         Render();
-        SDL_Delay(1); 
+        SDL_Delay(1);
     }
     CleanUp();
 }
 
-void Game::HandleEvents()
-{
+void Game::HandleEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (ui) ui->ProcessEvent(&event);
         if (event.type == SDL_EVENT_QUIT) running = false;
+        
         if (ImGui::GetIO().WantCaptureMouse) continue;
 
         if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -95,8 +107,7 @@ void Game::HandleEvents()
     }
 }
 
-void Game::Render()
-{
+void Game::Render() {
     if (ui) {
         ui->BeginFrame();
         ui->RenderInterface(use24hFormat, currentTheme, showAnalog, showDigital, 
@@ -121,15 +132,10 @@ void Game::Render()
 
     if (ui) ui->EndFrame();
     SDL_RenderPresent(renderer);
-
-    if (myAlarm.ringing) {
-        //bip pour alarm
-        std::cout << '\a'; //le carractere 'bell' genere un "bip" du systeme
-    }
 }
 
-void Game::CleanUp()
-{
+void Game::CleanUp() {
+    if (audioStream) SDL_DestroyAudioStream(audioStream);
     if (ui) { delete ui; ui = nullptr; }
     if (clockRenderer) delete clockRenderer;
     if (renderer) SDL_DestroyRenderer(renderer);
