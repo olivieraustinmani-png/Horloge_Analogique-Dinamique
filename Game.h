@@ -22,7 +22,7 @@ private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     Renderer* clockRenderer = nullptr;
-    UI* ui = nullptr; // On utilise ta classe UI dédiée
+    UI* ui = nullptr; // On utilise la UI dédiée
     bool running = false;
 
     TimeManager timeManager;
@@ -35,6 +35,9 @@ private:
     float analogScale = 1.0f;
     float digitalScale = 1.0f;
     bool showDemo = false;
+
+    //Declaration de l'alarme
+    Alarm myAlarm;
 };
 
 #endif

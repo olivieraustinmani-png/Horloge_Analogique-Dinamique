@@ -24,7 +24,7 @@ void Renderer::shutdownImGui() {
 
 Renderer::Renderer(SDL_Renderer* r) : renderer(r) {}
 
-// === ANALOGIQUE (ton code exact) ===
+// === ANALOGIQUE===
 void Renderer::DrawAnalogFrame(int cx, int cy, int radius)
 {
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
@@ -86,7 +86,7 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
                        cx + cos(secAngle) * radius * 0.9f,
                        cy + sin(secAngle) * radius * 0.9f);
 
-    // Minute (blanc)
+    // Minute (gris)
     SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
     SDL_RenderLine(renderer,
                        cx, cy,
@@ -101,7 +101,7 @@ void Renderer::DrawHands(int cx, int cy, int radius, int hours, int minutes, int
                        cy + sin(hourAngle) * radius * 0.6f);
 }
 
-// === DIGITALE AVEC TES CHIFFRES et CADRE RÉDUIT ===
+// === DIGITALE AVEC CHIFFRES et CADRE RÉDUIT ===
 void Renderer::DrawDigitalDisplay(int x, int y, int w, int h, int hours, int minutes, int seconds)
 {
     // Fond du cadre digital - PLUS PETIT
@@ -116,7 +116,7 @@ void Renderer::DrawDigitalDisplay(int x, int y, int w, int h, int hours, int min
     SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
     SDL_RenderRect(renderer, &background);
     
-    // Afficher l'heure avec TES chiffres
+    // Afficher l'heure avec les chiffres
     int digitSize = 20; // Taille réduite pour cadre plus petit
     int startX = x + 10;
     int startY = y + (h - digitSize * 2) / 2;

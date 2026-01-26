@@ -13,8 +13,7 @@ Game::~Game() {
 
 bool Game::Init()
 {
-    // Correction : Utilisation d'une comparaison simple
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         std::cerr << "Erreur SDL_Init: " << SDL_GetError() << std::endl;
         return false;
     }
@@ -25,9 +24,7 @@ bool Game::Init()
     renderer = SDL_CreateRenderer(window, nullptr);
     if (!renderer) return false;
 
-    // On initialise l'UI qui s'occupe de tout l'interne ImGui
     ui = new UI(window, renderer);
-    
     clockRenderer = new Renderer(renderer);
     running = true;
     return true;
@@ -39,9 +36,47 @@ void Game::Run()
 
     while (running) {
         HandleEvents();
+        
+        // --- MISE À JOUR DU TEMPS ET LOGIQUE ---
         timeManager.Update();
+
+        // LOGIQUE DE L'ALARME : On vérifie si ça doit sonner
+        int h = timeManager.GetHours();
+        int m = timeManager.GetMinutes();
+        int s = timeManager.GetSeconds();
+
+        if (myAlarm.active && !myAlarm.ringing) {
+            //on vérifie l'heure et la minute
+            // Déclenchement si l'heure correspond (à la seconde 0 pour éviter les doublons)
+            // On ajoute un flag interne pour éviter que ça ne se déclenche 60 fois par seconde
+            static int lastTriggerMinute = -1;
+            bool isMainTime = (h == myAlarm.hour && m == myAlarm.minute && s == 0);
+            bool isSnoozeTime = (myAlarm.snoozeActive && h == myAlarm.snoozeHour && m == myAlarm.snoozeMinute && s == 0);
+
+            if ((isMainTime || isSnoozeTime) && lastTriggerMinute != m) {
+                myAlarm.ringing = true;
+                myAlarm.snoozeActive = false; // Désactive le mode snooze s'il était actif
+                lastTriggerMinute = m; // On mémorise qu'on a déjà fait sonner cette minute
+                std::cout << "Tok TOK Tok ! Il est " << h << ":" << m << std::endl;
+            }
+
+            // Reset du flag quand la minute passe pour permettre à l'alarme de demain de sonner
+            if (m != myAlarm.minute && !myAlarm.snoozeActive) {
+                lastTriggerMinute = -1;
+            }
+
+            if ( myAlarm.ringing ) {
+                //bip system comme son d'alarm
+                static int lastBipSecond = -1;
+                if ( s != lastBipSecond ) {
+                    std::cout <<"\a" << std::flush; //bip sonore
+                }
+            }
+        }
+        // ---------------------------------------
+
         Render();
-        SDL_Delay(1); // Plus fluide que 16ms pour ImGui
+        SDL_Delay(1); 
     }
     CleanUp();
 }
@@ -50,12 +85,8 @@ void Game::HandleEvents()
 {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        // L'UI traite l'événement en premier
         if (ui) ui->ProcessEvent(&event);
-
         if (event.type == SDL_EVENT_QUIT) running = false;
-
-        // Bloquer les événements si la souris est sur une fenêtre ImGui
         if (ImGui::GetIO().WantCaptureMouse) continue;
 
         if (event.type == SDL_EVENT_KEY_DOWN) {
@@ -66,18 +97,15 @@ void Game::HandleEvents()
 
 void Game::Render()
 {
-    // 1. Préparer la frame ImGui via ta classe UI
     if (ui) {
         ui->BeginFrame();
         ui->RenderInterface(use24hFormat, currentTheme, showAnalog, showDigital, 
-                            analogScale, digitalScale, showDemo);
+                            analogScale, digitalScale, showDemo, myAlarm);
     }
 
-    // 2. Fond SDL3
     SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
     SDL_RenderClear(renderer);
     
-    // 3. Dessin des horloges (si activées dans l'UI)
     if (clockRenderer) {
         if (showAnalog) {
             clockRenderer->DrawAnalogFrame(400, 250, 150 * analogScale);
@@ -91,10 +119,13 @@ void Game::Render()
         }
     }
 
-    // 4. Finaliser et afficher ImGui par dessus
     if (ui) ui->EndFrame();
-    
     SDL_RenderPresent(renderer);
+
+    if (myAlarm.ringing) {
+        //bip pour alarm
+        std::cout << '\a'; //le carractere 'bell' genere un "bip" du systeme
+    }
 }
 
 void Game::CleanUp()
@@ -105,4 +136,3 @@ void Game::CleanUp()
     if (window) SDL_DestroyWindow(window);
     SDL_Quit();
 }
-

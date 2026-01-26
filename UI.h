@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL3/SDL.h>
-#include "imgui.h" // Assure-toi que le chemin est bon dans ton projet
+#include "imgui.h" 
+#include "Alarm.h"
 
 class UI
 {
@@ -15,7 +16,7 @@ public:
     void RenderInterface(bool& use24hFormat, int& currentTheme, 
                         bool& showAnalog, bool& showDigital,
                         float& analogScale, float& digitalScale,
-                        bool& showDemo);
+                        bool& showDemo, Alarm& myAlarm);
 
     void ProcessEvent(const SDL_Event* event);
 

@@ -1,6 +1,7 @@
 #include "UI.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
+#include "Alarm.h" // Assure-toi que l'include est bien là
 #include <iostream>
 
 UI::UI(SDL_Window* win, SDL_Renderer* rend)
@@ -11,7 +12,6 @@ UI::UI(SDL_Window* win, SDL_Renderer* rend)
 
 UI::~UI()
 {
-    // Nettoyage impératif des backends avant de détruire le contexte
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     if (imguiContext) {
@@ -29,21 +29,13 @@ bool UI::Initialize()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     
-    // 1. Appliquer le style personnalisé
     ApplyCustomStyle();
 
-    // 2. Charger la police (Assure-toi que le fichier existe à ce chemin)
-    // Si le programme crash ici, commente la ligne suivante
+    // Note: Si le fichier police est manquant, le programme peut crash ici
     io.Fonts->AddFontFromFileTTF("assets/fonts/Saira_Condensed-Bold.ttf", 18.0f);
         
-    // 3. Initialisation des ponts SDL3 et Renderer
-    if (!ImGui_ImplSDL3_InitForSDLRenderer(window, renderer)) {
-        return false;
-    }
-    
-    if (!ImGui_ImplSDLRenderer3_Init(renderer)) {
-        return false;
-    }
+    if (!ImGui_ImplSDL3_InitForSDLRenderer(window, renderer)) return false;
+    if (!ImGui_ImplSDLRenderer3_Init(renderer)) return false;
 
     return true;
 }
@@ -51,23 +43,20 @@ bool UI::Initialize()
 void UI::ApplyCustomStyle() 
 {
     ImGuiStyle& style = ImGui::GetStyle();
-    
-    // --- Formes et Arrondis ---
-    style.WindowRounding = 8.0f;       // Fenêtres légèrement arrondies
-    style.FrameRounding = 5.0f;        // Boutons et champs arrondis
-    style.GrabRounding = 12.0f;        // Curseur des sliders circulaire
-    style.WindowBorderSize = 1.0f;     // Bordure fine
-    style.FramePadding = ImVec2(8, 6); // Plus d'espace dans les boutons
+    style.WindowRounding = 8.0f;
+    style.FrameRounding = 5.0f;
+    style.GrabRounding = 12.0f;
+    style.WindowBorderSize = 1.0f;
+    style.FramePadding = ImVec2(8, 6);
 
-    // --- Palette de Couleurs (Deep Charcoal & Electric Blue) ---
     ImVec4* colors = style.Colors;
-    colors[ImGuiCol_WindowBg]         = ImVec4(0.07f, 0.07f, 0.09f, 0.94f); // Fond sombre
+    colors[ImGuiCol_WindowBg]         = ImVec4(0.07f, 0.07f, 0.09f, 0.94f);
     colors[ImGuiCol_Header]           = ImVec4(0.20f, 0.25f, 0.35f, 1.00f); 
     colors[ImGuiCol_HeaderHovered]    = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
     colors[ImGuiCol_Button]           = ImVec4(0.20f, 0.25f, 0.35f, 1.00f);
-    colors[ImGuiCol_ButtonHovered]    = ImVec4(0.26f, 0.59f, 0.98f, 1.00f); // Bleu électrique
+    colors[ImGuiCol_ButtonHovered]    = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_FrameBg]          = ImVec4(0.16f, 0.16f, 0.21f, 1.00f);
-    colors[ImGuiCol_CheckMark]        = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_CheckMark]         = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_SliderGrab]       = ImVec4(0.24f, 0.52f, 0.88f, 1.00f);
 }
 
@@ -92,10 +81,9 @@ void UI::EndFrame()
 void UI::RenderInterface(bool& use24hFormat, int& currentTheme, 
                         bool& showAnalog, bool& showDigital,
                         float& analogScale, float& digitalScale,
-                        bool& showDemo)
+                        bool& showDemo, Alarm& myAlarm)
 {
-
-    // On mémorise l'ancien thème pour savoir s'il a changé
+    // Gestion du changement de thème
     static int lastTheme = -1;
     if (currentTheme != lastTheme) {
         UpdateTheme(currentTheme);
@@ -103,10 +91,83 @@ void UI::RenderInterface(bool& use24hFormat, int& currentTheme,
     }
 
     RenderMainMenuBar();
-    RenderClockControls(use24hFormat, currentTheme, showAnalog, showDigital,
-                       analogScale, digitalScale, showDemo);
-    RenderThemePreview(currentTheme);
+
+    ImGui::Begin("Configuration", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+    if (ImGui::BeginTabBar("Tabs")) {
+        if (ImGui::BeginTabItem("Horloge")) {
+            RenderClockControls(use24hFormat, currentTheme, showAnalog, showDigital, analogScale, digitalScale, showDemo);
+            ImGui::EndTabItem();
+        }
+
+        // Dans UI.cpp, dans l'onglet "Alarme"
+if (ImGui::BeginTabItem("Alarme")) {
+    ImGui::Text("Regler l'heure du reveil :");
     
+    // Utilisation de InputInt au lieu de SliderInt pour une précision totale
+    // On peut taper l'heure au clavier ou utiliser les petits boutons + / -
+    ImGui::PushItemWidth(150); 
+    if (ImGui::InputInt("Heures", &myAlarm.hour)) {
+        if (myAlarm.hour > 23) myAlarm.hour = 0;
+        if (myAlarm.hour < 0) myAlarm.hour = 23;
+    }
+    
+    if (ImGui::InputInt("Minutes", &myAlarm.minute)) {
+        if (myAlarm.minute > 59) myAlarm.minute = 0;
+        if (myAlarm.minute < 0) myAlarm.minute = 59;
+    }
+    ImGui::PopItemWidth();
+
+    ImGui::Separator();
+    
+    // Affichage clair de l'heure programmée
+    ImGui::Text("Alarme fixee a : %02d:%02d", myAlarm.hour, myAlarm.minute);
+
+    if (ImGui::Checkbox("Activer l'alarme", &myAlarm.active)) {
+        if(!myAlarm.active) {
+            myAlarm.snoozeActive = false;
+            myAlarm.ringing = false;
+        }
+    }
+    
+    if (myAlarm.snoozeActive) {
+        ImGui::TextColored(ImVec4(1,1,0,1), "Snooze actif pour %02d:%02d", myAlarm.snoozeHour, myAlarm.snoozeMinute);
+    }
+        ImGui::EndTabItem();
+    }
+        ImGui::EndTabBar();
+    }
+    ImGui::End();
+
+    // --- POPUP DE SONNERIE ---
+    if (myAlarm.ringing) {
+        ImGui::OpenPopup("REVEIL !");
+    }
+
+    if (ImGui::BeginPopupModal("REVEIL !", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Il est %02d:%02d !", myAlarm.hour, myAlarm.minute);
+        
+        if (ImGui::Button("Arreter", ImVec2(120, 40))) {
+            myAlarm.ringing = false;
+            myAlarm.active = false;
+            myAlarm.snoozeActive = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Snooze (10m)", ImVec2(120, 40))) {
+            myAlarm.snoozeMinute = myAlarm.minute + 10;
+            myAlarm.snoozeHour = myAlarm.hour;
+            if (myAlarm.snoozeMinute >= 60) {
+                myAlarm.snoozeMinute -= 60;
+                myAlarm.snoozeHour = (myAlarm.snoozeHour + 1) % 24;
+            }
+            myAlarm.ringing = false;
+            myAlarm.snoozeActive = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
     if (showDemo) {
         ImGui::ShowDemoWindow(&showDemo);
     }
@@ -143,30 +204,26 @@ void UI::RenderMainMenuBar()
     }
 }
 
-
 void UI::UpdateTheme(int themeID) {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
 
     switch (themeID) {
-        case 1: // THEME : NUIT (Bleu sombre et Cyan)
+        case 1: // THEME : NUIT
             colors[ImGuiCol_WindowBg] = ImVec4(0.05f, 0.05f, 0.10f, 0.95f);
             colors[ImGuiCol_Button]   = ImVec4(0.10f, 0.30f, 0.50f, 1.00f);
             colors[ImGuiCol_Text]     = ImVec4(0.00f, 0.90f, 1.00f, 1.00f);
             break;
-
-        case 2: // THEME : RETRO (Orange et Gris)
+        case 2: // THEME : RETRO
             colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.12f, 0.10f, 1.00f);
             colors[ImGuiCol_Button]   = ImVec4(0.80f, 0.40f, 0.00f, 1.00f);
             colors[ImGuiCol_Text]     = ImVec4(1.00f, 0.80f, 0.50f, 1.00f);
             break;
-
-        case 3: // THEME : MINIMAL (Blanc / Gris clair)
-            ImGui::StyleColorsLight(); // Base claire
+        case 3: // THEME : MINIMAL
+            ImGui::StyleColorsLight();
             style.WindowBorderSize = 1.0f;
             break;
-
-        default: // THEME : CLASSIQUE (Celui que nous avons fait ensemble)
+        default: 
             ApplyCustomStyle(); 
             break;
     }
@@ -177,8 +234,7 @@ void UI::RenderClockControls(bool& use24hFormat, int& currentTheme,
                             float& analogScale, float& digitalScale,
                             bool& showDemo)
 {
-    ImGui::Begin("Reglages de l'Horloge", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    
+    // Note: On ne met plus de ImGui::Begin ici car c'est déjà appelé dans un TabItem
     if (ImGui::CollapsingHeader("Affichage", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("Analogique", &showAnalog);
         ImGui::Checkbox("Digitale", &showDigital);
@@ -201,13 +257,4 @@ void UI::RenderClockControls(bool& use24hFormat, int& currentTheme,
 
     ImGui::Separator();
     ImGui::Checkbox("Debug Demo ImGui", &showDemo);
-    
-    ImGui::End();
-}
-
-void UI::RenderThemePreview(int currentTheme)
-{
-    ImGui::Begin("Apercu Theme", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Theme actuel : %d", currentTheme);
-    ImGui::End();
 }
