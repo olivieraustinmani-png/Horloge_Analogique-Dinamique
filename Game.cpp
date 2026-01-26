@@ -8,6 +8,28 @@
 
 Game::Game() : audioDevice(0), audioStream(nullptr) {}
 
+// Fonction simple pour convertir l'arc-en-ciel (HSV) en couleurs utilisables par SDL (RGB)
+void HSVtoRGB(float h, float s, float v, uint8_t& r, uint8_t& g, uint8_t& b) {
+    float f = h * 6.0f;
+    int i = (int)f;
+    float f_part = f - i;
+    float p = v * (1.0f - s);
+    float q = v * (1.0f - s * f_part);
+    float t = v * (1.0f - s * (1.0f - f_part));
+    float rv, gv, bv;
+    switch (i % 6) {
+        case 0: rv = v; gv = t; bv = p; break;
+        case 1: rv = q; gv = v; bv = p; break;
+        case 2: rv = p; gv = v; bv = t; break;
+        case 3: rv = p; gv = q; bv = v; break;
+        case 4: rv = t; gv = p; bv = v; break;
+        case 5: rv = v; gv = p; bv = q; break;
+    }
+    r = (uint8_t)(rv * 255);
+    g = (uint8_t)(gv * 255);
+    b = (uint8_t)(bv * 255);
+}
+
 Game::~Game() {
     CleanUp();
 }
@@ -57,7 +79,7 @@ void Game::Run() {
     while (running) {
         HandleEvents();
         timeManager.Update();
-
+        
         int h = timeManager.GetHours();
         int m = timeManager.GetMinutes();
         int s = timeManager.GetSeconds();
@@ -108,29 +130,51 @@ void Game::HandleEvents() {
 }
 
 void Game::Render() {
-    if (ui) {
-        ui->BeginFrame();
-        ui->RenderInterface(use24hFormat, currentTheme, showAnalog, showDigital, 
-                            analogScale, digitalScale, showDemo, myAlarm);
-    }
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+    int cx = w / 2;
+    int cy = h / 2;
+    int dynamicRadius = (w < h ? w : h) * 0.30f * analogScale;
 
-    SDL_SetRenderDrawColor(renderer, 20, 20, 30, 255);
+    // --- 1. CALCUL ET DESSIN DU FOND ARC-EN-CIEL (SDL3) ---
+    static float hue = 0.0f;
+    hue += 0.0005f; 
+    if (hue > 1.0f) hue = 0.0f;
+
+    uint8_t r, g, b;
+    // Saturation 0.4, Valeur 0.15 (sombre pour que les aiguilles ressortent)
+    HSVtoRGB(hue, 0.4f, 0.15f, r, g, b); 
+
+    // On remplit tout l'arrière-plan SDL avec cette couleur
+    SDL_SetRenderDrawColor(renderer, r, g, b, 255);
     SDL_RenderClear(renderer);
-    
+
+    // --- 2. DESSIN DES HORLOGES (SDL3) ---
+    // Puisque le fond est fait, on dessine par-dessus
     if (clockRenderer) {
         if (showAnalog) {
-            clockRenderer->DrawAnalogFrame(400, 250, 150 * analogScale);
-            clockRenderer->DrawHands(400, 250, (150 * analogScale) - 20,
+            clockRenderer->DrawAnalogFrame(cx, cy, dynamicRadius);
+            clockRenderer->DrawHands(cx, cy, dynamicRadius,
                                     timeManager.GetHours(), timeManager.GetMinutes(), timeManager.GetSeconds());
         }
         
         if (showDigital) {
-            clockRenderer->DrawDigitalDisplay(250, 450, 300 * digitalScale, 60 * digitalScale,
+            int digW = 300 * digitalScale;
+            int digH = 60 * digitalScale;
+            clockRenderer->DrawDigitalDisplay(cx - (digW / 2), cy + dynamicRadius + 20, digW, digH,
                                              timeManager.GetHours(), timeManager.GetMinutes(), timeManager.GetSeconds());
         }
     }
 
-    if (ui) ui->EndFrame();
+    // --- 3. DESSIN DE L'INTERFACE (ImGui) ---
+    // ImGui est toujours dessiné en dernier pour être au premier plan
+    if (ui) {
+        ui->BeginFrame();
+        ui->RenderInterface(use24hFormat, currentTheme, showAnalog, showDigital, 
+                            analogScale, digitalScale, showDemo, myAlarm);
+        ui->EndFrame();
+    }
+
     SDL_RenderPresent(renderer);
 }
 
